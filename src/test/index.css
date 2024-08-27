@@ -1,0 +1,37 @@
+.app{
+    width: 140px;
+    height: 140px;
+    margin: auto;
+    margin-top: 120px;
+    background: #000;
+    position: relative;
+    border-radius: 50%;
+    &::before {
+        content: "";
+        position: absolute;
+        width: 40px;
+        height: 200px;
+        left: 50%;
+        top:100%;
+        border-radius: 20px;
+        transform: translate(-50%, -50%);
+        background: #000;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        border-radius: 15px;
+        height: 100px;
+        left: 0;
+        top:-20px;
+        background: #000;
+        box-shadow: 20px 0 0 0 #fff,
+                    40px 0 0 0 #000,
+                    60px 0 0 0 #fff,
+                    80px 0 0 0 #000,
+                    100px 0 0 0 #fff,
+                    120px 0 0 0 #000;
+    }
+}
