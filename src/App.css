@@ -2,6 +2,8 @@
     position: relative;
     width: 100%;
     height: 100%;
+    /* display: flex;
+    flex-direction: column; */
     .master-container {
         float: left;
         height: 468px;
@@ -86,6 +88,104 @@
                 }
                 .show {
                     
+                }
+            }
+        }
+    }
+
+    .timeline-wrap {
+        top: 40px;
+        position: relative;
+        height: 200px;
+        clear: both;
+        .timeline-labels {
+            color: white;
+            float: left;
+            padding: 0;
+            z-index: 10;
+            background-color: #2a3036;
+            margin-top: 17px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 117px;
+            width: 115px;
+            .timeline-header {
+                height: 19px;
+                padding: 0;
+                min-width: 115px;
+                width: 85px;
+                background: #8c8c86;
+                color: #e8eeef;
+            }
+            span{
+                display: block;
+                font-size: 13px;
+                font-weight: 100;
+                text-align: right;
+            }
+        }
+        .timeline-anchor {
+            position: absolute;
+            top: 0;
+            left: 115px;
+            .timeline-container {
+                float: left;
+                overflow-x: hidden;
+                padding-top: 17px;
+                position: relative;
+                top: 0px;
+                width: 24000px;
+                .timeline-header {
+                    background: #8c8c86;
+                    color: #e8eeef;
+                    font-size: 13px;
+                    min-width: 1550px;
+                    padding: 1px 0 0 8.5em;
+                    text-align: left;
+                    height: 18px;
+                    width: 100%;
+                    div{
+                        display: inline-block;
+                        text-transform: uppercase;
+                        width: 380px;
+                    }
+                    .timeline-top-arrow {
+                        border-left: 9px solid transparent;
+                        border-right: 9px solid transparent;
+                        border-bottom: 10px solid #2a3036;
+                        height: 0;
+                        position: relative;
+                        top: -6px;
+                        left: -2px;
+                    }
+                }
+
+                .timeline{
+                    background: #2a3036;
+                    height: 98px;
+                    padding: 0;
+                    text-align: left;
+                    .svg{
+                        .graphback{
+
+                        }
+                    }
+                    .slider {
+                        border-left: 2px solid #d6d6d7;
+                        border-right: 2px solid #d6d6d7;
+                        border-top: 17px solid #d6d6d7;
+                        border-top: 0px solid #d6d6d7;
+                        border-radius: 16px 16px 0 0;
+                        height: 138px;
+                        left: 2px;
+                        position: absolute;
+                        top: 0;
+                        width: 176px; 
+                    }
+                    .ui-draggable{
+                        cursor: move;
+                    }
                 }
             }
         }
