@@ -56,7 +56,7 @@
                                     }
                                     .tick-label{
                                         visibility: hidden;
-                                        color: red;
+                                        transform: perspective(none) rotateX(0deg) translateZ(0px);
                                     }
                                 }
                             }
@@ -77,12 +77,15 @@
                     color: #a0a7c1;
                     position: absolute;
                     display: block;
-                    left: 186.999px;
-                    top: 50.2385px;
+                    left: 16px;
+                    top: 320px;
                     font-size: 60.283%;
                 }
                 .hidden {
                     display: none;
+                }
+                .show {
+                    
                 }
             }
         }
