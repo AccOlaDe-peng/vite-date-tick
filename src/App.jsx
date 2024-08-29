@@ -3,7 +3,7 @@
  * @author: pengrenchang
  * @Date: 2024-08-14 10:30:14
  * @LastEditors: pengrenchang
- * @LastEditTime: 2024-08-28 18:24:17
+ * @LastEditTime: 2024-08-29 15:24:18
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -15,47 +15,63 @@ import Draggable from 'react-draggable';
 import './App.css'
 
 function App() {
-    const [dateList, setDateList] = useState([]);
+    const [dateList, setDateList] = useState(new Map());
     const [maxTick, setMaxTick] = useState(0);
     const [maxTimeline, setMaxTimeline] = useState(0);
     const [maxTop, setMaxTop] = useState(0);
     const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [selectId, setSelectId] = useState("");
     const svgRef = useRef(null);
     const tickRef = useRef(null);
     const scroll = useScroll(svgRef);
     const dateRef = useRef([]);
-    const numTicks = 50;
+    const numTicks = 50; //时间刻度
+    const containerHeight = 468; // 可视区域高度
+
+    const constantHeight = 1000;
+    const constantLeft = 400;
 
     //驱动比例
     const scale = round(maxTop / maxTimeline, 2);
     // 定义函数
     const  generateDateList = (endDate, days) => {
         // 创建日期数组
-        const dateList = range(days).map(i => {
+        const dateList_ = range(days).map(i => {
             // 使用dayjs往前推日期
             return dayjs(endDate).subtract(i, 'day').format('YYYY-MM-DD')
         }).reverse();
         
-        return dateList.map((date, i)=> ({date, tick: 50 + 180 * i, timeline: 5 + 25 * i}))
+        return dateList_.map((date, i)=> ({date, tick: 50 + 180 * i, timeline: 5 + 25 * i}))
     }
 
     useEffect(() => {
         const dateList_ = generateDateList("2024-08-26", numTicks);
         setMaxTick(dateList_[dateList_.length - 1].tick + 150)
         setMaxTimeline(dateList_[dateList_.length - 1].timeline)
-        setDateList(dateList_);
+        setDateList(prevMap => {
+            const newMap = new Map(prevMap);
+            dateList_.forEach(n => {
+                if (n == "2024-08-25") {
+                    newMap.set(n.date, {...n, startTime: [ dayjs("2024-08-25 12:30:30").unix(), [ dayjs("2024-08-25 08:30:30").unix()]]});
+                } else {
+                    newMap.set(n.date, n);
+                }
+            });
+            return newMap;
+        });
     }, [])
 
-    const callback = useMemoizedFn((entry) => {
-        setDateList(prev => {
-            return prev.map((item, i) => {
-                if (toNumber(entry.target.id) === i) {
-                    return { ...item, entry }
-                };
-                return item
-            })
-        })
-    });
+    // const callback = useMemoizedFn((entry) => {
+    //     setDateList(prevMap => {
+    //         const newMap = new Map(prevMap);
+    //         return newMap.map(([date, value]) => {
+    //             if (toNumber(entry.target.id) === i) {
+    //                 return { ...item, entry }
+    //             };
+    //             return item
+    //         })
+    //     })
+    // });
     const adjustSequenceIncreasingDiff = (arr) =>  {
         const n = arr.length;
         if (n < 2) return arr;
@@ -96,12 +112,16 @@ function App() {
         }
     }
 
+    const handleSelect = (e) => {
+        console.log(e.currentTarget.getAttribute("data-backup-id"))
+    }
+
     // console.log(dateList)
-    const [inViewport, ratio] = useInViewport(dateRef.current, {
-        callback,
-        // threshold: [0, 0.25, 0.5, 0.75, 1],
-        root: svgRef,
-    });
+    // const [inViewport, ratio] = useInViewport(dateRef.current, {
+    //     callback,
+    //     // threshold: [0, 0.25, 0.5, 0.75, 1],
+    //     root: svgRef,
+    // });
 
     const timeHeader = map(range(0, 720 + 15, 15), d => d === 0? "Latest": `${d} Days`);
 
@@ -111,14 +131,8 @@ function App() {
         const slidingDistance = scrollHeight - round(data.x * scale, 0)
         setPosition({ x: data.x, y: 0 });
         setScrollTop(slidingDistance)
-
     }
 
-    // const getTop = (n) => {
-    //     const top = parseInt(scroll?.top);
-    //     console.log(top, (n.tick - top ) % 468)
-    //     return  (n.tick - top ) % 468
-    // }
     useEffect(()=> {
         if(scroll?.top){
             const top = parseInt(scroll.top, 10);
@@ -126,6 +140,68 @@ function App() {
             const slidingDistance = round((maxTop - top) / scale, 0)
             setPosition({ x: slidingDistance, y: 0 })
             //刻度滚动逻辑
+            const tickElements = document.querySelectorAll('.tick');
+            // console.log(tickElements)
+            tickElements.forEach(tick => {
+                const initialTop = tick.id;
+                const date = tick.getAttribute("data");
+                const newTop = initialTop - top; 
+                // 获取并打印刻度的滚动位置
+                if (date) {
+                    // console.log(newTop);
+                    // const tickScrollPositionTop = tick.getBoundingClientRect().top - svgRef.current?.getBoundingClientRect().top;
+                    // console.log(tick.getBoundingClientRect().top,svgRef.current?.getBoundingClientRect().top, tickScrollPositionTop)
+                    // 检查刻度标记是否在视口内
+                    if (newTop <= 0) {
+                        const tickScrollPositionTop = 0 - svgRef.current?.getBoundingClientRect().top;
+                        const tickScrollPositionLeft = 220;
+                        setDateList(prevMap => {
+                            const newMap = new Map(prevMap);
+                            newMap.set(date, { ...prevMap.get(date), style: {display: "none", top: tickScrollPositionTop, left: tickScrollPositionLeft} });
+                            return newMap;
+                        })
+                        // console.log(date, tickScrollPositionTop)
+                        // 将刻度标记移动到新的位置
+                        // dateList.map(n => {
+                        //     if (n.date === date) {
+                        //         return {...n, style:{top: }}
+                        //     }
+                        //     return n
+                        // })
+                    } else if (newTop > 0 && newTop < constantHeight) { //不知道1000怎么来的。但是实际感受下来就是1000
+                        const tickScrollPositionTop = tick.getBoundingClientRect().top - svgRef.current?.getBoundingClientRect().top;
+                        const tickScrollPositionLeft = tick.getBoundingClientRect().left / 1.15 + 50;
+
+                        const fontSizeScale = (300 - tickScrollPositionLeft) / 33  + 5;
+                        console.log(fontSizeScale)
+                        setDateList(prevMap => {
+                            const newMap = new Map(prevMap);
+                            newMap.set(date, { ...prevMap.get(date), style: {display: "block", top: tickScrollPositionTop, left: tickScrollPositionLeft, fontSize: fontSizeScale + "px" } });
+                            return newMap;
+                        })
+                        // console.log(date, tickScrollPositionTop);
+                        // dateList.map(n => {
+                        //     if (n.date === date) {
+                        //         return {...n, style:{top: }}
+                        //     }
+                        //     return n
+                        // })
+                        // 将刻度标记移出视口
+                        // tick.style.display = "none";
+                    } else {
+                        const tickScrollPositionTop = containerHeight - svgRef.current?.getBoundingClientRect().top;
+                        const tickScrollPositionLeft = -100;
+                        setDateList(prevMap => {
+                            const newMap = new Map(prevMap);
+                            newMap.set(date, { ...prevMap.get(date), style: {display: "none", top: tickScrollPositionTop, left: tickScrollPositionLeft} });
+                            return newMap;
+                        })
+                    }
+                }
+                
+                // tick.style.top = `${newTop}px`; // 更新位置
+
+            });
             // setDateList(prev => {
             //     const arr = prev.filter(n => n.entry?.isIntersecting).map(n => {
             //         return  {label: n.date, num: round(divide(n.tick - top + 220 , 2.7), 0)}
@@ -176,19 +252,31 @@ function App() {
                             <g className="outerg" transform="translate(75,60)"  >
                                 <g className="g-box" fill="none" transform="translate(-100,0)">
                                     <path className="domain" stroke="red" d={`M6,0.5H0.5V${maxTick}H6`}></path>
-                                    {dateList.map((n, index) => (<g key={n.date} className="tick" id={index} transform={`translate(0,${n.tick})`} ref={el => { dateRef.current[index] = el }}>
-                                            <line className="tick-line" stroke="#cdcdcd" strokeWidth="4" x2="575" x1="93"></line>
-                                            <text className="tick-label" fill="red" x="4" dy="0.32em" 
-                                            // transform='translateZ(200px) rotateX(-79deg)'
-                                            >{n.date}</text>
-                                        </g>))
-                                    }
+                                    {map([...dateList], ([date, value]) => (<g key={date} className="tick" id={value.tick} transform={`translate(0,${value.tick})`} data={value.date} ref={el => { dateRef.current[date] = el }}>
+                                        <line className="tick-line" stroke="#cdcdcd" strokeWidth="4" x2="575" x1="93"></line>
+                                        <text className="tick-label" fill="" x="4" dy="0.32em" 
+                                        >{value.date}</text>
+                                    </g>))}
                                 </g>
                             </g>
                         </svg>
                     </div>
+                    <div className="markers">
+                        {/* {map([...dateList], ([date, value]) => (<div data-date="date" data-backup-id="123" data-backup-name="" className="marker-container selected snapshot" style={{ display: "block", left: "145.57px", top: "233.672px", width: "61.9024px", height: "61.9024px" }} onClick={handleSelect}>
+                            <div className="outer-halo"></div>
+                            <div className="halo"></div>
+                            <div className="marker"></div>
+                            <div className="shadow"></div>
+                        </div>))} */}
+                        <div data-date="" data-backup-id="234" data-backup-name="" className="marker-container snapshot" style={{display: "block", left: "134.57px", top: "312.672px", width: "61.9024px", height: "61.9024px"}} onClick={handleSelect}>
+                            <div className="outer-halo"></div>
+                            <div className="halo"></div>
+                            <div className="marker"></div>
+                            <div className="shadow"></div>
+                        </div>
+                    </div>
                     <div className="dates" ref={tickRef}>
-                        {map(dateList, (n, index) => (<div key={n.date} className={classnames({["date"]: true, ['hidden']: !n.entry?.isIntersecting})} style={n?.style}>{n.date}</div>))}
+                        {map([...dateList], ([date, value]) => (<div key={date} className="date" style={value?.style}>{date}</div>))}
                     </div>
                 </div>
             </div>
@@ -215,7 +303,7 @@ function App() {
                                         <g className="tl" transform="translate(10,0)">
                                             <g className="x axis" fontSize="10" transform="translate(0, 70)" fill="none" fontFamily="sans-serif" textAnchor="middle">
                                                 <path className="domain" stroke="" d="M0.5,-9V0.5H1304V-9" style={{ display: "none" }}></path>
-                                                {dateList.map((n, index) => (<g key={n.date} className="tick" transform={`translate(${n.timeline}, 0)`} >
+                                                {map([...dateList], ([date, value]) => (<g key={date} className="tick" transform={`translate(${value.timeline}, 0)`} >
                                                     <line stroke="#3b4046" strokeWidth="3" y2="-70" y1="18"></line>
                                                     <text fill="red" y="-12" dy="0em"></text>
                                                 </g>))}
